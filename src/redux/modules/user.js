@@ -1,56 +1,113 @@
-import {createAction, handleActions} from "redux-actions";
-import {produce} from "immer"
+import { createAction, handleActions } from "redux-actions";
+import { produce } from "immer";
 
 import { setCookie, getCookie, deleteCookie } from "../../shared/Cookie";
 
-//actions
-const LOG_IN = "LOG_IN";
+import { auth } from "../../shared/firebase";
+
+// actions
 const LOG_OUT = "LOG_OUT";
 const GET_USER = "GET_USER";
+const SET_USER = "SET_USER";
 
-//action creators
-const logIn = createAction(LOG_IN, (user) => ({user}));
-const logOut = createAction(LOG_OUT, (user) => ({user}));
-const getUser = createAction(GET_USER, (user) => ({user}));
+// action creators
+const logOut = createAction(LOG_OUT, (user) => ({ user }));
+const getUser = createAction(GET_USER, (user) => ({ user }));
+const setUser = createAction(SET_USER, (user) => ({ user }));
 
-
-//initalState
-const initialState= {
-    user: null,
-    is_login: false,
+// initialState
+const initialState = {
+  user: null,
+  is_login: false,
 };
 
-//middleware actions
-const loginAction = (user) => {
+// middleware actions
+const loginFB = (id, pwd) => {
     return function (dispatch, getState, {history}) {
-        console.log(history);
-        dispatch(logIn(user));
-        history.push('/');
-    }  
+
+        auth
+            .signInWithEmailAndPassword(id, pwd)
+            .then((user) => {
+                console.log(user);
+                dispatch(setUser({
+                    user_name: user.user.displayName, 
+                    id: id, 
+                    user_profile: "",
+                })
+                );
+                history.push('/');
+            })
+        
+            .catch((error) => {
+                var errorCode = error.code;
+                var errorMessage = error.message;
+        
+                console.log(errorCode, errorMessage);
+                // ..
+              });
+    }
 }
 
+const signupFB = (id, pwd, user_name) => {
+  return function (dispatch, getState, {history}){
 
-//reducer
-export default handleActions({
-    [LOG_IN] : (state, action) => produce(state, (draft)=> {
+    auth
+      .createUserWithEmailAndPassword(id, pwd)
+      .then((user) => {
+
+        console.log(user);
+        
+        auth.currentUser.updateProfile({
+          displayName: user_name,
+        }).then(()=>{
+          dispatch(setUser({user_name: user_name, id: id, user_profile: ''}));
+          history.push('/');
+        }).catch((error) => {
+          console.log(error);
+        });
+
+        // Signed in
+        // ...
+      })
+      .catch((error) => {
+        var errorCode = error.code;
+        var errorMessage = error.message;
+
+        console.log(errorCode, errorMessage);
+        // ..
+      });
+
+      console.log('gggggggg')
+      
+  }
+}
+
+// reducer
+export default handleActions(
+  {
+    [SET_USER]: (state, action) =>
+      produce(state, (draft) => {
         setCookie("is_login", "success");
         draft.user = action.payload.user;
         draft.is_login = true;
-    }),
-    [LOG_OUT] : (state, action) => produce(state, (draft)=> {
+      }),
+    [LOG_OUT]: (state, action) =>
+      produce(state, (draft) => {
         deleteCookie("is_login");
         draft.user = null;
         draft.is_login = false;
-    }),
-    [GET_USER] : (state, action) => produce(state, (draft)=> {}),
-}, initialState);
+      }),
+    [GET_USER]: (state, action) => produce(state, (draft) => {}),
+  },
+  initialState
+);
 
-//action creator export
+// action creator export
 const actionCreators = {
-    logIn,
-    logOut,
-    getUser,
-    loginAction,
-}
+  logOut,
+  getUser,
+  loginFB,
+  signupFB,
+};
 
 export { actionCreators };
