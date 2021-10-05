@@ -25,7 +25,9 @@ const Image = (props) => {
 
     return (
         <React.Fragment>
-            
+            <ImageDefault {...styles}>
+
+            </ImageDefault>
         </React.Fragment>
     )
 }
@@ -35,6 +37,15 @@ Image.defaultProps = {
   src: "https://cherryiscute.s3.ap-northeast-2.amazonaws.com/%E1%84%89%E1%85%B3%E1%84%8F%E1%85%B3%E1%84%85%E1%85%B5%E1%86%AB%E1%84%89%E1%85%A3%E1%86%BA+2021-08-22+%E1%84%8B%E1%85%A9%E1%84%92%E1%85%AE+7.56.01.png",
   size: 36,
 };
+
+const ImageDefault = styled.div`
+    --size: ${(props) => props.size}px;
+    width: var(--size);
+    height: var(--size);
+
+    background-image: url("${(props) => props.src}");
+    background-size: cover;
+`
 
 const AspectOutter = styled.div`
     width: 100%;
@@ -47,6 +58,7 @@ const AspectInner = styled.div`
     overflow: hidden;
     background-image: url("${(props) => props.src}");
     background-size: cover;
+    background-position: center;
 `;
 
 const ImageCircle = styled.div`
